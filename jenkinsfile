@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    docker.build('myapp:latest')
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'echo "Running tests..."' // Add your test commands here
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                withDockerRegistry([credentialsId: 'dockerhub-credentials', url: '']) {
+                    script {
+                        docker.image('myapp:latest').push("latest")
+                    }
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    kubernetesDeploy(configs: 'k8s/deployment.yaml', kubeconfigId: 'kubeconfig')
+                }
+            }
+        }
+    }
+}
+
